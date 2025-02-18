@@ -1,0 +1,10 @@
+{
+  "name": "myjeansfinder-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/myjeansfinder-e2e/src",
+  "tags": [],
+  "implicitDependencies": ["myjeansfinder"],
+  "// targets": "to see all targets run: nx show project myjeansfinder-e2e --web",
+  "targets": {}
+}
