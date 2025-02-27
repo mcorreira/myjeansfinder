@@ -13,7 +13,7 @@ const jeansData = [
   },
   {
     id: 2,
-    name: 'Levis',
+    brand: 'Levis',
     style: '501',
     color: 'Blue',
     wash: 'medium',
@@ -24,7 +24,7 @@ const jeansData = [
   },
   {
     id: 3,
-    name: 'Judy Blue',
+    brand: 'Judy Blue',
     style: 'JB0878',
     color: 'Blue',
     wash: 'dark',
@@ -40,11 +40,11 @@ exports.searchJeans = (req, res) => {
     const { brand, minPrice, maxPrice, color } = req.query;
 
     // Filter jeans based on query parameters
-    let results = [jeansData];
+    let results = [...jeansData];
 
     if (brand) {
       results = results.filter((jeans) =>
-        jean.brand.toLowerCase().includes(brand.toLowerCase())
+        jeans.brand.toLowerCase().includes(brand.toLowerCase())
       );
     }
 
