@@ -1,8 +1,8 @@
 //** @type {import('jest').JestConfigWithTsJest} */
 
 const config = {
-  testEnvionment: 'node',
-  testMatch: ['**/*.spec.js'],
+  testEnvironment: 'node',
+  testMatch: ['**/*.test.js'],
   verbose: true,
 };
 
