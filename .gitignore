@@ -37,7 +37,7 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
-
+apps/myjeansfinder-api/.env
 .nx/cache
 .nx/workspace-data
 
