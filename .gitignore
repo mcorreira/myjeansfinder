@@ -42,3 +42,15 @@ apps/myjeansfinder-api/.env
 .nx/workspace-data
 
 .angular
+
+# Environment files
+apps/myjeansfinder-api/.env
+apps/myjeansfinder-api/.env.example
+apps/myjeansfinder/src/environments/*.ts
+!apps/myjeansfinder/src/environments/environment.ts
+
+# Node modules
+node_modules/
+
+# Nx cache
+.nx/

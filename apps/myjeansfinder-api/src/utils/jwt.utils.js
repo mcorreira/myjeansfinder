@@ -11,7 +11,7 @@ const config = require('../config/auth.config');
 
   const generateAccessToken = (user) => {
     const payload = {
-      id: user.id,
+      name: user.name,
       email: user.email,
       role: user.role,
       type: 'access'
