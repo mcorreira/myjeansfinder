@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
-const { promisify } = require('uitl');
+const { promisify } = require('util');
 
 const scryptAsync = promisify(crypto.scrypt);
-const randomBytesAsync = promisify(cryto.randomBytes);
+const randomBytesAsync = promisify(crypto.randomBytes);
 
 const userSchema = new mongoose.Schema(
   {

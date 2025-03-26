@@ -35,7 +35,7 @@ const jeansData = [
   },
 ];
 
-exports.searchJeans = (req, res) => {
+exports.searchJeans = async (req, res) => {
   try {
     const { brand, minPrice, maxPrice, color } = req.query;
 

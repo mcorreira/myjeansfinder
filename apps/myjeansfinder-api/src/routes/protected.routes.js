@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate, requireAdmin } = require('../middleware/auth.middleware');
+const { verifyToken, requireAdmin } = require('../middleware/auth.middleware');
 
 // Protected routes for authenticated users
-router.get('/profile', authenticate, (req, res) => {
+router.get('/profile', verifyToken, (req, res) => {
   res.json({
     success: true,
     message: 'You have access to this protected data',
@@ -15,7 +15,7 @@ router.get('/profile', authenticate, (req, res) => {
 });
 
 // Protected routes for admin users
-router.get('/admin-data', authenticate, requireAdmin, (req, res) => {
+router.get('/admin-data', verifyToken, requireAdmin, (req, res) => {
   res.json({
     success: true,
     message: 'You have admin access to this protected data',
