@@ -2,6 +2,14 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const { promisify } = require('util');
 
+// Configure scrypt parameters for secure password hashing
+const SCRYPT_PARAMS = {
+  N: 16384, // CPU/memory cost parameter
+  r: 8, // Block size parameter
+  p: 1, // Parallelization parameter
+  keylen: 64, // Derived key length
+};
+
 const scryptAsync = promisify(crypto.scrypt);
 const randomBytesAsync = promisify(crypto.randomBytes);
 
@@ -9,12 +17,14 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, 'Name is required'],
       trim: true,
+      minlength: [2, 'Name must be at least 2 characters'],
     },
     email: {
       type: String,
-      required: true,
+      required: [true, 'Email is required'],
+      unique: true,
       lowercase: true,
       trim: true,
       match: [
@@ -24,65 +34,97 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
-      minlength: 8,
+      required: [true, 'Password is required'],
+      minlength: [12, 'Password must be at least 12 characters'],
+      select: false,
     },
     salt: {
       type: String,
       required: true,
+      select: false,
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
+      enum: {
+        values: ['user', 'admin'],
+        message: 'Invalid role specified',
+      },
       default: 'user',
     },
-    created: {
-      type: Date,
-      default: Date.now,
-    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: function (doc, ret) {
+        delete ret.password;
+        delete ret.salt;
+        return ret;
+      },
+    },
+    toObject: {
+      virtuals: true,
+      transform: function (doc, ret) {
+        delete ret.password;
+        delete ret.salt;
+        return ret;
+      },
+    },
+  }
 );
 
-// Pre-save middleware to hash password before saving
+// Password hashing middleware
 userSchema.pre('save', async function (next) {
-  // Only hash password if it's modified or new
   if (!this.isModified('password')) return next();
 
   try {
-    // Generate salt (16 bytes = 128 bits)
-    const saltBuffer = await randomBytesAsync(16);
-    this.salt = saltBuffer.toString('hex');
+    // Generate cryptographically secure salt
+    this.salt = (await randomBytesAsync(16)).toString('hex');
 
-    // Hash password using scrypt with 64KB memory, N=16384, r=8, p=1
-    // Resulting in a 64 byte hash
-    const derivedKey = await scryptAsync(this.password, this.salt, 64);
+    // Hash password with configured parameters
+    const derivedKey = await scryptAsync(
+      this.password,
+      this.salt,
+      SCRYPT_PARAMS.keylen,
+      {
+        cost: SCRYPT_PARAMS.N,
+        blockSize: SCRYPT_PARAMS.r,
+        parallelization: SCRYPT_PARAMS.p,
+      }
+    );
 
-    // Store hashed password as hex
     this.password = derivedKey.toString('hex');
     next();
   } catch (error) {
-    next(error);
+    next(new Error('Failed to hash password: ' + error.message));
   }
 });
 
-// Method to compare passwords for login
+// Password comparison method
 userSchema.methods.comparePassword = async function (candidatePassword) {
   try {
-    // Convert stored salt from hex to buffer
-    const salt = Buffer.from(this.salt, 'hex');
-
-    // Hash candidate password with same parameters
-    const candidateHash = await scryptAsync(candidatePassword, salt, 64);
-
-    // Convert stored password from hex to buffer
+    const saltBuffer = Buffer.from(this.salt, 'hex');
     const storedPassword = Buffer.from(this.password, 'hex');
 
-    // Use timing-safe comparison to prevent timing attacks
+    const candidateHash = await scryptAsync(
+      candidatePassword,
+      saltBuffer,
+      SCRYPT_PARAMS.keylen,
+      {
+        cost: SCRYPT_PARAMS.N,
+        blockSize: SCRYPT_PARAMS.r,
+        parallelization: SCRYPT_PARAMS.p,
+      }
+    );
+
     return crypto.timingSafeEqual(candidateHash, storedPassword);
   } catch (error) {
+    console.error('Password comparison error:', error);
     return false;
   }
 };
+
+// Indexes
+userSchema.index({ email: 1 }, { unique: true });
 
 module.exports = mongoose.model('User', userSchema);
