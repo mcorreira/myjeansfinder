@@ -1,93 +1,31 @@
-// Mock data for demo
-const jeansData = [
-  {
-    id: 1,
-    brand: 'Rag & Bone',
-    style: 'Skinny',
-    color: 'Black',
-    wash: 'regular',
-    size: '28',
-    inseam: '30',
-    description: 'Distressed, raw edge',
-    price: 39.99,
-  },
-  {
-    id: 2,
-    brand: 'Levis',
-    style: '501',
-    color: 'Blue',
-    wash: 'medium',
-    size: '32',
-    inseam: '31',
-    description: 'Classic, slim fit',
-    price: 49.99,
-  },
-  {
-    id: 3,
-    brand: 'Judy Blue',
-    style: 'JB0878',
-    color: 'Blue',
-    wash: 'dark',
-    size: '18',
-    inseam: '31',
-    description: 'skinny fit',
-    price: 49.99,
-  },
-];
+const User = require('../models/user');
 
-exports.searchJeans = async (req, res) => {
+exports.searchUsers = async (req, res) => {
   try {
-    const { brand, minPrice, maxPrice, color } = req.query;
+    const { query } = req.query;
 
-    // Filter jeans based on query parameters
-    let results = [...jeansData];
-
-    if (brand) {
-      results = results.filter((jeans) =>
-        jeans.brand.toLowerCase().includes(brand.toLowerCase())
-      );
+    if (!query) {
+      return res.status(400).json({ message: 'Search query is required' });
     }
 
-    if (minPrice) {
-      results = results.filter((jeans) => jeans.price >= parseFloat(minPrice));
-    }
-
-    if (maxPrice) {
-      results = results.filter((jeans) => jeans.price <= parseFloat(maxPrice));
-    }
-
-    if (color) {
-      results = results.filter((jeans) =>
-        jeans.color.toLowerCase().includes(color.toLowerCase())
-      );
-    }
+    const users = await User.find({
+      $or: [
+        { name: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } },
+      ],
+    }).select('-password -salt');
 
     res.status(200).json({
-      message: 'Search successful',
-      count: results.length,
-      results,
+      success: true,
+      message: 'Search results retrieved successfully',
+      data: users,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
-exports.getJeansById = (req, res) => {
-  try {
-    const { id } = req.params; // Use req.params.id to get the jeans ID
-
-    // Find the jeans by ID
-    const jeans = jeansData.find((item) => item.id === parseInt(id));
-
-    if (!jeans) {
-      return res.status(404).json({ message: 'Jeans not found' });
-    }
-
-    res.status(200).json({
-      message: 'Jeans found',
-      jeans,
+    console.error('Search Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve search results',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
