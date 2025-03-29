@@ -7,23 +7,27 @@ exports.register = async (req, res) => {
     const { username, email, password } = req.body;
 
     // Check if user already exists
-    const userExists = await user.findOne({ email });
+    const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
     // Create a new user
-    const newUser = new user({
+    const newUser = new User({
       name: username,
       email,
-      password, //Passwoed hashed by pre-save hook in user model
+      password, // Password hashed by pre-save hook in user model
     });
 
     // Save user to database
     await newUser.save();
 
     // Return success response (omit password)
-    const { password: _, salt, ...userWithoutPassword } = newUser.toObject();
+    const {
+      password: _password,
+      salt: _salt,
+      ...userWithoutPassword
+    } = newUser.toObject();
     res.status(201).json({
       message: 'User registered successfully',
       user: userWithoutPassword,
@@ -38,14 +42,14 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     // Find user by email
-    const user = await user.findOne({ email });
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     // Check password
-    const PasswordIsValid = await user.comparePassword(password);
-    if (!PasswordIsValid) {
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
@@ -59,7 +63,11 @@ exports.login = async (req, res) => {
     );
 
     // Return user info and token
-    const { password: _, salt, ...userWithoutPassword } = user.toObject();
+    const {
+      password: _password,
+      salt: _salt,
+      ...userWithoutPassword
+    } = user.toObject();
 
     res.status(200).json({
       message: 'Login successful',
@@ -70,6 +78,7 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 exports.getProfile = (req, res) => {
   res.json({
     success: true,

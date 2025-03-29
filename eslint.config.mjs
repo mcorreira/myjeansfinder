@@ -1,42 +1,55 @@
-import nx from '@nx/eslint-plugin';
+import js from '@eslint/js';
+import globals from 'globals';
 
 export default [
-  ...nx.configs['flat/base'],
-  ...nx.configs['flat/typescript'],
-  ...nx.configs['flat/javascript'],
+  js.configs.recommended,
+  // Main configuration
   {
-    ignores: ['**/dist'],
-  },
-  {
-    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    files: ['**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2024,
+      sourceType: 'module',
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        AudioWorkletGlobalScope: 'readonly',
+      },
+    },
     rules: {
-      '@nx/enforce-module-boundaries': [
-        'error',
+      'no-unused-vars': [
+        'warn',
         {
-          enforceBuildableLibDependency: true,
-          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?js$'],
-          depConstraints: [
-            {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
-            },
-          ],
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
         },
       ],
+      'no-console': 'off',
     },
   },
+  // Test-specific configuration
   {
-    files: [
-      '**/*.ts',
-      '**/*.tsx',
-      '**/*.cts',
-      '**/*.mts',
-      '**/*.js',
-      '**/*.jsx',
-      '**/*.cjs',
-      '**/*.mjs',
+    files: ['**/*.test.js'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+      },
+    },
+  },
+  // Ignore patterns
+  {
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      '**/*.d.ts',
+      '**/package.json',
+      '**/package-lock.json',
     ],
-    // Override or add rules here
-    rules: {},
   },
 ];

@@ -44,27 +44,25 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Pre save middleware to hash password before saving
+// Pre-save middleware to hash password before saving
 userSchema.pre('save', async function (next) {
-  // Hash password if it has been modified or new
-  if (!this.isModified('password')) {
-    return next();
+  // Only hash password if it's modified or new
+  if (!this.isModified('password')) return next();
 
-    try {
-      // Generate salt (16 bytes = 128 bits)
-      const salt = await randomBytesAsync(16);
-      this.salt = salt.toString('hex');
+  try {
+    // Generate salt (16 bytes = 128 bits)
+    const saltBuffer = await randomBytesAsync(16);
+    this.salt = saltBuffer.toString('hex');
 
-      // Hash password using scrypt with 64KB memory, N=16384, r=8, p=1
-      //Resulting in a 64 byte hash
-      const derivedKey = await scryptAsynch(this.password, this.salt, 64);
+    // Hash password using scrypt with 64KB memory, N=16384, r=8, p=1
+    // Resulting in a 64 byte hash
+    const derivedKey = await scryptAsync(this.password, this.salt, 64);
 
-      // Store hased password as hex
-      this.password = derivedKey.toString('hex');
-      next();
-    } catch (error) {
-      next(error);
-    }
+    // Store hashed password as hex
+    this.password = derivedKey.toString('hex');
+    next();
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -75,13 +73,13 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
     const salt = Buffer.from(this.salt, 'hex');
 
     // Hash candidate password with same parameters
-    const cadidateHash = await scryptAsync(candidatePassword, salt, 64);
+    const candidateHash = await scryptAsync(candidatePassword, salt, 64);
 
     // Convert stored password from hex to buffer
     const storedPassword = Buffer.from(this.password, 'hex');
 
-    //Use timing-safe comparison to prevent timing attacks
-    return crypto.timingSafeEqual(cadidateHash, storedPassword);
+    // Use timing-safe comparison to prevent timing attacks
+    return crypto.timingSafeEqual(candidateHash, storedPassword);
   } catch (error) {
     return false;
   }
