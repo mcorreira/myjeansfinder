@@ -1,66 +1,114 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-const authRoutes = require('./routes/auth.routes.js');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
+const config = require('./config');
+const authRoutes = require('./routes/auth.routes');
 const protectedRoutes = require('./routes/protected.routes');
 const searchRoutes = require('./routes/search.routes');
 
-// Initialize express
-
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+// Database Connection
+const connectDB = async () => {
+  try {
+    await mongoose.connect(config.mongoURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+    });
+    console.log('🗄️  Connected to MongoDB');
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
+  }
+};
 
 // Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(morgan('combined')); // HTTP request logging
+app.use(helmet()); // Security headers
+app.use(cors(config.corsOptions)); // Configure CORS properly
+app.use(express.json({ limit: '10kb' })); // Body limit
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/myjeansfinder')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('Failed to connect to MongoDB:', err));
+// Rate Limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', apiLimiter);
 
-// Security middleware
+// Security Headers Middleware
 app.use((req, res, next) => {
-  // Set security headers
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'"
+  );
+  res.setHeader(
+    'Strict-Transport-Security',
+    'max-age=31536000; includeSubDomains'
+  );
   next();
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/protected', protectedRoutes);
-app.use('/api/search', searchRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/protected', protectedRoutes);
+app.use('/api/v1/search', searchRoutes);
 
-// Test route
-app.get('/', (req, res) => {
-  res.send('MyJeansFinder API is running');
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
-});
-
-// Error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'production' ? null : err.message,
+// Health Check Endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    database:
+      mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// 404 Handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    status: 'fail',
+    message: `🔍 - Not Found - ${req.originalUrl}`,
+  });
 });
 
-// Export app for testing
-module.exports = app;
+// Error Handler
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  const message =
+    config.isProduction && statusCode === 500
+      ? 'An unexpected error occurred'
+      : err.message;
+
+  console.error('💥 ERROR:', err.stack);
+
+  res.status(statusCode).json({
+    status: 'error',
+    message,
+    ...(config.isDevelopment && { stack: err.stack }),
+  });
+});
+
+// Graceful Shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received. Closing server...');
+  server.close(() => {
+    console.log('💤 Server closed');
+    mongoose.connection.close(false);
+  });
+});
+
+// Start Server
+const server = app.listen(config.port, async () => {
+  await connectDB();
+  console.log(`🚀 Server running on port ${config.port}`);
+});
+
+module.exports = server;
