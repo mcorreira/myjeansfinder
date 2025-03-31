@@ -1,12 +1,42 @@
-import nx from '@nx/eslint-plugin';
-import baseConfig from '../../eslint.config.mjs';
+import angularESLint from '@angular-eslint/eslint-plugin';
+import globals from 'globals';
 
 export default [
-  ...baseConfig,
-  ...nx.configs['flat/angular'],
-  ...nx.configs['flat/angular-template'],
   {
+    // Base JavaScript configuration
+    files: ['**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
+    },
+    rules: {
+      'no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
+  {
+    // Angular TypeScript configuration
     files: ['**/*.ts'],
+    plugins: {
+      '@angular-eslint': angularESLint,
+    },
+    languageOptions: {
+      parser: '@typescript-eslint/parser',
+      parserOptions: {
+        project: './tsconfig.json',
+        sourceType: 'module',
+      },
+    },
     rules: {
       '@angular-eslint/directive-selector': [
         'error',
@@ -27,8 +57,13 @@ export default [
     },
   },
   {
+    // HTML template configuration
     files: ['**/*.html'],
-    // Override or add rules here
-    rules: {},
+    plugins: {
+      '@angular-eslint': angularESLint,
+    },
+    rules: {
+      // Add HTML-specific rules here
+    },
   },
 ];

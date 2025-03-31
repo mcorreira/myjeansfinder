@@ -1,35 +1,33 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const User = require('../models/user');
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-const users = [];
-const JWT_SECRET = 'your-secret-key';
-
-exports.register = (req, res) => {
+exports.register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
     // Check if user already exists
-    const userExists = users.find((user) => user.email === email);
+    const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hash the password
-    const hashedPassword = bcrypt.hashSync(password, 8);
-
     // Create a new user
-    const newUser = {
-      id: users.length + 1,
-      username,
+    const newUser = new User({
+      name: username,
       email,
-      password: hashedPassword,
-    };
+      password, // Password hashed by pre-save hook in user model
+    });
 
-    // Save user (array atm, database later)
-    users.push(newUser);
+    // Save user to database
+    await newUser.save();
 
     // Return success response (omit password)
-    const { password: _, ...userWithoutPassword } = newUser;
+    const {
+      password: _password,
+      salt: _salt,
+      ...userWithoutPassword
+    } = newUser.toObject();
     res.status(201).json({
       message: 'User registered successfully',
       user: userWithoutPassword,
@@ -39,29 +37,38 @@ exports.register = (req, res) => {
   }
 };
 
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user
-    const user = users.find((user) => user.email === email);
+    // Find user by email
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     // Check password
-    const PasswordIsValid = bcrypt.compareSync(password, user.password);
-    if (!PasswordIsValid) {
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     // Generate JWT token
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, {
-      expiresIn: 86400, // 24 hours
-    });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      {
+        expiresIn: 86400, // 24 hours
+      }
+    );
 
     // Return user info and token
-    const { password: _, ...userWithoutPassword } = user;
+    const {
+      password: _password,
+      salt: _salt,
+      ...userWithoutPassword
+    } = user.toObject();
+
     res.status(200).json({
       message: 'Login successful',
       user: userWithoutPassword,
@@ -72,6 +79,22 @@ exports.login = (req, res) => {
   }
 };
 
-exports.logout = (req, res) => {
-  res.status(200).json({ message: 'Logout successful' });
+exports.getProfile = (req, res) => {
+  res.json({
+    success: true,
+    message: 'Protected profile data',
+    data: {
+      user: req.user,
+      timestamp: new Date(),
+    },
+  });
+};
+
+// Helper function to remove sensitive fields
+const sanitizeUser = (user) => {
+  if (!user) return null;
+  const { password, salt, ...safeUser } = user.toObject
+    ? user.toObject()
+    : user;
+  return safeUser;
 };
