@@ -38,8 +38,6 @@ testem.log
 .DS_Store
 Thumbs.db
 apps/myjeansfinder-api/.env
-.nx/cache
-.nx/workspace-data
 
 .angular
 
@@ -51,6 +49,3 @@ apps/myjeansfinder/src/environments/*.ts
 
 # Node modules
 node_modules/
-
-# Nx cache
-.nx/
