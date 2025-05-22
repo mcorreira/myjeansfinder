@@ -1,4 +1,7 @@
 {
+  "angularCompilerOptions": {
+    "strictTemplates": true
+  },
   "compilerOptions": {
     "target": "es2020",
     "module": "es2020",
@@ -7,7 +10,13 @@
     "baseUrl": "./",
     "paths": {
       "@myjeansfinder/*": ["packages/*"]
-    }
+    },
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
-  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
+  "exclude": [
+    "node_modules",
+    "../../tests/myjeansfinder-e2e",
+    "../../tests/myjeansfinder-e2e/**/*"
+  ]
 }

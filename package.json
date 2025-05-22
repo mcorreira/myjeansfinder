@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "build": "cd frontend/myjeansfinder && ng build",
+    "build:api": "tsc -p backend/myjeansfinder-api",
     "test": "jest",
     "test:watch": "jest --watch",
     "start:api": "node backend/myjeansfinder-api/src/server.js",
@@ -24,7 +26,7 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~19.1.0",
+    "@angular-devkit/build-angular": "^19.2.13",
     "@angular-devkit/core": "~19.1.0",
     "@angular-devkit/schematics": "~19.1.0",
     "@angular/cli": "~19.1.0",
@@ -36,8 +38,8 @@
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
-    "@types/jest": "^29.5.12",
-    "@types/node": "18.16.9",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.21",
     "@typescript-eslint/utils": "^8.19.0",
     "angular-eslint": "^19.0.2",
     "cypress": "^13.13.0",
@@ -50,10 +52,10 @@
     "jest-preset-angular": "~14.4.0",
     "prettier": "^2.6.2",
     "supertest": "^7.0.0",
-    "ts-jest": "^29.1.0",
+    "ts-jest": "^29.3.4",
     "ts-node": "10.9.1",
     "tslib": "^2.3.0",
-    "typescript": "~5.7.2",
+    "typescript": "^5.7.2",
     "typescript-eslint": "^8.19.0"
   }
 }

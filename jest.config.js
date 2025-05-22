@@ -1,12 +1,15 @@
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/frontend', '<rootDir>/backend'],
-  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
-  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.json',
-    },
+  preset: 'jest-preset-angular',
+  setupFilesAfterEnv: ['<rootDir>/frontend/myjeansfinder/src/setup-jest.ts'],
+  testEnvironment: 'jsdom',
+  roots: ['<rootDir>/frontend/myjeansfinder/src'],
+  testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
+  transform: {
+    '^.+\\.(ts|js|html)$': 'jest-preset-angular',
   },
+  moduleFileExtensions: ['ts', 'js', 'html'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/frontend/myjeansfinder/src/$1',
+  },
+  transformIgnorePatterns: ['node_modules/(?!(@angular|rxjs|zone\\.js)/)'],
 };

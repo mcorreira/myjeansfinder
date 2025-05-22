@@ -5,20 +5,20 @@
     "myjeansfinder": {
       "projectType": "application",
       "prefix": "app",
-      "root": "apps/myjeansfinder",
-      "sourceRoot": "apps/myjeansfinder/src",
+      "root": "myjeansfinder",
+      "sourceRoot": "myjeansfinder/src",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "outputPath": "dist/myjeansfinder",
-            "index": "apps/myjeansfinder/src/index.html",
-            "main": "apps/myjeansfinder/src/main.ts",
+            "index": "myjeansfinder/src/index.html",
+            "browser": "myjeansfinder/src/main.ts",
             "polyfills": ["zone.js"],
-            "tsConfig": "apps/myjeansfinder/tsconfig.app.json",
+            "tsConfig": "myjeansfinder/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": ["apps/myjeansfinder/public"],
-            "styles": ["apps/myjeansfinder/src/styles.scss"]
+            "assets": ["myjeansfinder/src/public"],
+            "styles": ["myjeansfinder/src/styles.scss"]
           },
           "configurations": {
             "production": {
