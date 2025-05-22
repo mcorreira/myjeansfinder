@@ -1,11 +1,13 @@
 {
-  "name": "@preset=angular-monorepo/source",
+  "name": "myjeansfinder",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
-    "start:api": "node apps/myjeansfinder-api/src/server.js"
+    "start:api": "node backend/myjeansfinder-api/src/server.js",
+    "e2e": "cypress open --project ./tests/myjeansfinder-e2e",
+    "e2e:run": "cypress run --project ./tests/myjeansfinder-e2e"
   },
   "private": true,
   "dependencies": {
